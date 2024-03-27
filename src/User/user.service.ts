@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { CreateUserDTO } from "./dto/create-user-dto";
 import { PrismaService } from "src/prisma/prisma.service";
 import { UpdateUserDTO } from "./dto/update-user-dto";
@@ -26,7 +26,7 @@ export class UserService {
         return this.prisma.user_login.findMany()
     }
 
-    async show(id: number) {
+    async show(id: number) {  
         return this.prisma.user_login.findUnique({
             where:{
                 id,
@@ -34,6 +34,9 @@ export class UserService {
         })
     }
     async update(id: number, data: UpdateUserDTO){
+        if (!(await this.show(id))) {
+            throw new NotFoundException(`Usuario ${id} não encontrado.`)
+        }
         return this.prisma.user_login.update({
             data,
             where: {
@@ -42,7 +45,23 @@ export class UserService {
             
         })
     }
-    async updatePartial(id: number, data: UpdatePatchUserDTO){
+    async updatePartial(id: number, {name, email, cpf, password}: UpdatePatchUserDTO){
+        const data: any = {}
+        if (!(await this.show(id))) {
+            throw new NotFoundException(`Usuario ${id} não encontrado.`)
+        }
+        if (name) {
+            data.name = name
+        }
+        if (email) {
+            data.email = email
+        }
+        if (cpf) {
+            data.cpf = cpf
+        }
+        if (password) {
+            data.password = password
+        }
         return this.prisma.user_login.update({
             data,
             where: {
@@ -53,6 +72,9 @@ export class UserService {
     }
 
     async delete(id: number) {
+        if (!(await this.show(id))) {
+            throw new NotFoundException(`Usuario ${id} não encontrado.`)
+        }
         return this.prisma.user_login.delete({
             where:{
                 id,
